@@ -6,7 +6,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Category } from './category.entity';
-import { ProductImage } from './product-image.entity';
+import { Image } from './product-image.entity';
 
 @Entity()
 export class Product {
@@ -21,8 +21,8 @@ export class Product {
   })
   category: Category;
 
-  @OneToMany(() => ProductImage, (image) => image.product, {
+  @OneToMany(() => Image, (image) => image.product, {
     cascade: true,
   })
-  images: ProductImage[];
+  images: Image[];
 }
