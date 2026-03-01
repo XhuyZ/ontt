@@ -1,0 +1,49 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { Product } from './entities/product.entity';
+import { Category } from './entities/category.entity';
+import { CreateProductDto } from './dto/create-product.dto';
+
+@Injectable()
+export class ProductService {
+  constructor(
+    @InjectRepository(Product)
+    private productRepo: Repository<Product>,
+
+    @InjectRepository(Category)
+    private categoryRepo: Repository<Category>,
+  ) {}
+
+  async create(dto: CreateProductDto) {
+    const category = await this.categoryRepo.findOne({
+      where: { id: dto.categoryId },
+    });
+
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    const product = this.productRepo.create({
+      name: dto.name,
+      category,
+      images: dto.images, // cascade true nên auto insert
+    });
+
+    return this.productRepo.save(product);
+  }
+
+  async findAll() {
+    return this.productRepo.find({
+      relations: ['category', 'images'],
+    });
+  }
+
+  async findOne(id: number) {
+    return this.productRepo.findOne({
+      where: { id },
+      relations: ['category', 'images'],
+    });
+  }
+}
