@@ -41,6 +41,16 @@ export class ProjectService {
     });
   }
 
+  findByProjectCategoryId(projectCategoryId: string) {
+    return this.projectRepo.find({
+      where: {
+        projectCategory: { id: projectCategoryId },
+      },
+      relations: ['images', 'projectCategory'],
+      order: { name: 'ASC' },
+    });
+  }
+
   async findOne(id: string) {
     const project = await this.projectRepo.findOne({
       where: { id },

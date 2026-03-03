@@ -28,6 +28,13 @@ export class ProjectController {
     return this.projectService.findAll();
   }
 
+  @Get('category/:projectCategoryId')
+  findByProjectCategoryId(
+    @Param('projectCategoryId', ParseUUIDPipe) projectCategoryId: string,
+  ) {
+    return this.projectService.findByProjectCategoryId(projectCategoryId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.projectService.findOne(id);

@@ -28,6 +28,11 @@ export class ProductController {
     return this.productService.findAll();
   }
 
+  @Get('category/:categoryId')
+  findByCategoryId(@Param('categoryId', ParseUUIDPipe) categoryId: string) {
+    return this.productService.findByCategoryId(categoryId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.productService.findOne(id);

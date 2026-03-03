@@ -41,6 +41,16 @@ export class ProductService {
     });
   }
 
+  async findByCategoryId(categoryId: string) {
+    return this.productRepo.find({
+      where: {
+        category: { id: categoryId },
+      },
+      relations: ['category', 'images'],
+      order: { name: 'ASC' },
+    });
+  }
+
   async findOne(id: string) {
     const product = await this.productRepo.findOne({
       where: { id },
