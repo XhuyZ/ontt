@@ -16,6 +16,34 @@ export class ProjectService {
     private readonly projectCategoryRepo: Repository<ProjectCategory>,
   ) {}
 
+  private buildImageUrl(path?: string) {
+    if (!path) {
+      return path;
+    }
+
+    const baseUrl =
+      process.env.IMAGE_BASE_URL ||
+      process.env.APP_BASE_URL ||
+      process.env.PUBLIC_BASE_URL ||
+      '';
+
+    if (!baseUrl) {
+      return path;
+    }
+
+    return `${baseUrl.replace(/\/+$/, '')}${path}`;
+  }
+
+  private withImageUrl<T extends { images?: Array<{ url?: string }> }>(item: T): T {
+    return {
+      ...item,
+      images: (item.images ?? []).map((image) => ({
+        ...image,
+        imgUrl: this.buildImageUrl(image.url),
+      })),
+    };
+  }
+
   async create(dto: CreateProjectDto) {
     const projectCategory = await this.projectCategoryRepo.findOne({
       where: { id: dto.projectCategoryId },
@@ -35,20 +63,22 @@ export class ProjectService {
     return this.projectRepo.save(project);
   }
 
-  findAll() {
-    return this.projectRepo.find({
+  async findAll() {
+    const items = await this.projectRepo.find({
       relations: ['images', 'projectCategory'],
     });
+    return items.map((item) => this.withImageUrl(item));
   }
 
-  findByProjectCategoryId(projectCategoryId: string) {
-    return this.projectRepo.find({
+  async findByProjectCategoryId(projectCategoryId: string) {
+    const items = await this.projectRepo.find({
       where: {
         projectCategory: { id: projectCategoryId },
       },
       relations: ['images', 'projectCategory'],
       order: { name: 'ASC' },
     });
+    return items.map((item) => this.withImageUrl(item));
   }
 
   async findOne(id: string) {
@@ -61,7 +91,7 @@ export class ProjectService {
       throw new NotFoundException('Project not found');
     }
 
-    return project;
+    return this.withImageUrl(project);
   }
 
   async update(id: string, dto: UpdateProjectDto) {
@@ -88,7 +118,8 @@ export class ProjectService {
       project.images = dto.images as any;
     }
 
-    return this.projectRepo.save(project);
+    const saved = await this.projectRepo.save(project);
+    return this.withImageUrl(saved);
   }
 
   async remove(id: string) {

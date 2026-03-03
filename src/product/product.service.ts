@@ -17,6 +17,34 @@ export class ProductService {
     private categoryRepo: Repository<Category>,
   ) {}
 
+  private buildImageUrl(path?: string) {
+    if (!path) {
+      return path;
+    }
+
+    const baseUrl =
+      process.env.IMAGE_BASE_URL ||
+      process.env.APP_BASE_URL ||
+      process.env.PUBLIC_BASE_URL ||
+      '';
+
+    if (!baseUrl) {
+      return path;
+    }
+
+    return `${baseUrl.replace(/\/+$/, '')}${path}`;
+  }
+
+  private withImageUrl<T extends { images?: Array<{ url?: string }> }>(item: T): T {
+    return {
+      ...item,
+      images: (item.images ?? []).map((image) => ({
+        ...image,
+        imgUrl: this.buildImageUrl(image.url),
+      })),
+    };
+  }
+
   async create(dto: CreateProductDto) {
     const category = await this.categoryRepo.findOne({
       where: { id: dto.categoryId },
@@ -36,19 +64,21 @@ export class ProductService {
   }
 
   async findAll() {
-    return this.productRepo.find({
+    const items = await this.productRepo.find({
       relations: ['category', 'images'],
     });
+    return items.map((item) => this.withImageUrl(item));
   }
 
   async findByCategoryId(categoryId: string) {
-    return this.productRepo.find({
+    const items = await this.productRepo.find({
       where: {
         category: { id: categoryId },
       },
       relations: ['category', 'images'],
       order: { name: 'ASC' },
     });
+    return items.map((item) => this.withImageUrl(item));
   }
 
   async findOne(id: string) {
@@ -61,7 +91,7 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    return product;
+    return this.withImageUrl(product);
   }
 
   async update(id: string, dto: UpdateProductDto) {
@@ -88,7 +118,8 @@ export class ProductService {
       product.images = dto.images as any;
     }
 
-    return this.productRepo.save(product);
+    const saved = await this.productRepo.save(product);
+    return this.withImageUrl(saved);
   }
 
   async remove(id: string) {
