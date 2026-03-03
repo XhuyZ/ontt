@@ -4,8 +4,8 @@ import { Project } from '../../project/entities/project.entity';
 
 @Entity()
 export class Image {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   url: string;

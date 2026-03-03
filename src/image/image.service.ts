@@ -56,7 +56,7 @@ export class ImageService {
     return { id: saved.id, url: saved.url };
   }
 
-  async uploadToProduct(productId: number, file: Express.Multer.File) {
+  async uploadToProduct(productId: string, file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -73,7 +73,7 @@ export class ImageService {
     return { id: saved.id, url: saved.url, productId: product.id };
   }
 
-  async uploadToProject(projectId: number, file: Express.Multer.File) {
+  async uploadToProject(projectId: string, file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -90,7 +90,7 @@ export class ImageService {
     return { id: saved.id, url: saved.url, projectId: project.id };
   }
 
-  async addToProduct(productId: number, imageId: number) {
+  async addToProduct(productId: string, imageId: string) {
     const product = await this.productRepo.findOne({ where: { id: productId } });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -107,7 +107,7 @@ export class ImageService {
     return this.imageRepo.save(image);
   }
 
-  async addToProject(projectId: number, imageId: number) {
+  async addToProject(projectId: string, imageId: string) {
     const project = await this.projectRepo.findOne({ where: { id: projectId } });
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -124,7 +124,7 @@ export class ImageService {
     return this.imageRepo.save(image);
   }
 
-  async removeById(id: number) {
+  async removeById(id: string) {
     const image = await this.imageRepo.findOne({ where: { id } });
     if (!image) {
       throw new NotFoundException('Image not found');
@@ -134,7 +134,7 @@ export class ImageService {
     return { deleted: true };
   }
 
-  async removeByProduct(productId: number) {
+  async removeByProduct(productId: string) {
     const result = await this.imageRepo
       .createQueryBuilder()
       .delete()
@@ -144,7 +144,7 @@ export class ImageService {
     return { deleted: result.affected ?? 0 };
   }
 
-  async removeByProject(projectId: number) {
+  async removeByProject(projectId: string) {
     const result = await this.imageRepo
       .createQueryBuilder()
       .delete()

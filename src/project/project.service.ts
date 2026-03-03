@@ -29,7 +29,7 @@ export class ProjectService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const project = await this.projectRepo.findOne({
       where: { id },
       relations: ['images'],
@@ -42,7 +42,7 @@ export class ProjectService {
     return project;
   }
 
-  async update(id: number, dto: UpdateProjectDto) {
+  async update(id: string, dto: UpdateProjectDto) {
     const project = await this.findOne(id);
 
     if (dto.name !== undefined) {
@@ -57,7 +57,7 @@ export class ProjectService {
     return this.projectRepo.save(project);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const project = await this.findOne(id);
     await this.projectRepo.remove(project);
     return { deleted: true };

@@ -3,8 +3,8 @@ import { Image } from '../../product/entities/product-image.entity';
 
 @Entity()
 export class Project {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   name: string;

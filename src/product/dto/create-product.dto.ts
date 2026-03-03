@@ -1,8 +1,8 @@
 import {
   IsString,
   IsNotEmpty,
-  IsNumber,
   IsArray,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -21,9 +21,9 @@ export class CreateProductDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 1 })
-  @IsNumber()
-  categoryId: number;
+  @ApiProperty({ example: '4aa9c891-0057-4c57-90ee-dde4bb95814f' })
+  @IsUUID()
+  categoryId: string;
 
   @ApiProperty({ type: [CreateProductImageDto] })
   @IsArray()

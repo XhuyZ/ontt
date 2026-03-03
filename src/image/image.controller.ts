@@ -3,7 +3,7 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Post,
   UploadedFile,
   Query,
@@ -66,7 +66,7 @@ export class ImageController {
   })
   @UseInterceptors(FileInterceptor('file'))
   uploadToProduct(
-    @Param('productId', ParseIntPipe) productId: number,
+    @Param('productId', ParseUUIDPipe) productId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.imageService.uploadToProduct(productId, file);
@@ -88,7 +88,7 @@ export class ImageController {
   })
   @UseInterceptors(FileInterceptor('file'))
   uploadToProject(
-    @Param('projectId', ParseIntPipe) projectId: number,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.imageService.uploadToProject(projectId, file);
@@ -96,32 +96,32 @@ export class ImageController {
 
   @Post('product/:productId/:imageId')
   addToProduct(
-    @Param('productId', ParseIntPipe) productId: number,
-    @Param('imageId', ParseIntPipe) imageId: number,
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Param('imageId', ParseUUIDPipe) imageId: string,
   ) {
     return this.imageService.addToProduct(productId, imageId);
   }
 
   @Post('project/:projectId/:imageId')
   addToProject(
-    @Param('projectId', ParseIntPipe) projectId: number,
-    @Param('imageId', ParseIntPipe) imageId: number,
+    @Param('projectId', ParseUUIDPipe) projectId: string,
+    @Param('imageId', ParseUUIDPipe) imageId: string,
   ) {
     return this.imageService.addToProject(projectId, imageId);
   }
 
   @Delete(':id')
-  removeById(@Param('id', ParseIntPipe) id: number) {
+  removeById(@Param('id', ParseUUIDPipe) id: string) {
     return this.imageService.removeById(id);
   }
 
   @Delete('product/:productId')
-  removeByProduct(@Param('productId', ParseIntPipe) productId: number) {
+  removeByProduct(@Param('productId', ParseUUIDPipe) productId: string) {
     return this.imageService.removeByProduct(productId);
   }
 
   @Delete('project/:projectId')
-  removeByProject(@Param('projectId', ParseIntPipe) projectId: number) {
+  removeByProject(@Param('projectId', ParseUUIDPipe) projectId: string) {
     return this.imageService.removeByProject(projectId);
   }
 }

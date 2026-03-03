@@ -23,8 +23,9 @@ const isProduction = process.env.NODE_ENV === 'production';
             type: 'postgres',
             url: process.env.DATABASE_URL,
             autoLoadEntities: true,
-            synchronize: false,
-            logging: false,
+            // User requirement: always sync schema on npm start
+            synchronize: true,
+            logging: true,
             ssl: {
               rejectUnauthorized: false,
             },

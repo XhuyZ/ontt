@@ -7,10 +7,11 @@ import { Category } from './entities/category.entity';
 import { Image } from './entities/product-image.entity';
 import { CategoryService } from './category.service';
 import { CategoryController } from './category.controller';
+import { CategorySeedService } from './category-seed.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Product, Category, Image])],
   controllers: [ProductController, CategoryController],
-  providers: [ProductService, CategoryService],
+  providers: [ProductService, CategoryService, CategorySeedService],
 })
 export class ProductModule {}

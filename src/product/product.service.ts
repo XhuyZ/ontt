@@ -41,7 +41,7 @@ export class ProductService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const product = await this.productRepo.findOne({
       where: { id },
       relations: ['category', 'images'],
@@ -54,7 +54,7 @@ export class ProductService {
     return product;
   }
 
-  async update(id: number, dto: UpdateProductDto) {
+  async update(id: string, dto: UpdateProductDto) {
     const product = await this.findOne(id);
 
     if (dto.name !== undefined) {
@@ -81,7 +81,7 @@ export class ProductService {
     return this.productRepo.save(product);
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     const product = await this.findOne(id);
     await this.productRepo.remove(product);
     return { deleted: true };
