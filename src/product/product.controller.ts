@@ -7,8 +7,10 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -24,18 +26,21 @@ export class ProductController {
   }
 
   @Get()
-  findAll() {
-    return this.productService.findAll();
+  findAll(@Req() req: Request) {
+    return this.productService.findAll(req);
   }
 
   @Get('category/:categoryId')
-  findByCategoryId(@Param('categoryId', ParseUUIDPipe) categoryId: string) {
-    return this.productService.findByCategoryId(categoryId);
+  findByCategoryId(
+    @Param('categoryId', ParseUUIDPipe) categoryId: string,
+    @Req() req: Request,
+  ) {
+    return this.productService.findByCategoryId(categoryId, req);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.productService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.productService.findOne(id, req);
   }
 
   @Patch(':id')

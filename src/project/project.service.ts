@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type { Request } from 'express';
 
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -16,16 +17,39 @@ export class ProjectService {
     private readonly projectCategoryRepo: Repository<ProjectCategory>,
   ) {}
 
-  private buildImageUrl(path?: string) {
+  private resolveBaseUrl(req?: Request) {
+    const configuredBaseUrl =
+      process.env.IMAGE_BASE_URL ||
+      process.env.APP_BASE_URL ||
+      process.env.PUBLIC_BASE_URL;
+
+    if (configuredBaseUrl) {
+      return configuredBaseUrl.replace(/\/+$/, '');
+    }
+
+    if (!req) {
+      return '';
+    }
+
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const proto = Array.isArray(forwardedProto)
+      ? forwardedProto[0]
+      : forwardedProto || req.protocol;
+
+    const forwardedHost = req.headers['x-forwarded-host'];
+    const host = Array.isArray(forwardedHost)
+      ? forwardedHost[0]
+      : forwardedHost || req.get('host');
+
+    return host ? `${proto}://${host}` : '';
+  }
+
+  private buildImageUrl(path?: string, req?: Request) {
     if (!path) {
       return path;
     }
 
-    const baseUrl =
-      process.env.IMAGE_BASE_URL ||
-      process.env.APP_BASE_URL ||
-      process.env.PUBLIC_BASE_URL ||
-      '';
+    const baseUrl = this.resolveBaseUrl(req);
 
     if (!baseUrl) {
       return path;
@@ -34,12 +58,15 @@ export class ProjectService {
     return `${baseUrl.replace(/\/+$/, '')}${path}`;
   }
 
-  private withImageUrl<T extends { images?: Array<{ url?: string }> }>(item: T): T {
+  private withImageUrl<T extends { images?: Array<{ url?: string }> }>(
+    item: T,
+    req?: Request,
+  ): T {
     return {
       ...item,
       images: (item.images ?? []).map((image) => ({
         ...image,
-        imgUrl: this.buildImageUrl(image.url),
+        imgUrl: this.buildImageUrl(image.url, req),
       })),
     };
   }
@@ -63,14 +90,14 @@ export class ProjectService {
     return this.projectRepo.save(project);
   }
 
-  async findAll() {
+  async findAll(req?: Request) {
     const items = await this.projectRepo.find({
       relations: ['images', 'projectCategory'],
     });
-    return items.map((item) => this.withImageUrl(item));
+    return items.map((item) => this.withImageUrl(item, req));
   }
 
-  async findByProjectCategoryId(projectCategoryId: string) {
+  async findByProjectCategoryId(projectCategoryId: string, req?: Request) {
     const items = await this.projectRepo.find({
       where: {
         projectCategory: { id: projectCategoryId },
@@ -78,10 +105,10 @@ export class ProjectService {
       relations: ['images', 'projectCategory'],
       order: { name: 'ASC' },
     });
-    return items.map((item) => this.withImageUrl(item));
+    return items.map((item) => this.withImageUrl(item, req));
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, req?: Request) {
     const project = await this.projectRepo.findOne({
       where: { id },
       relations: ['images', 'projectCategory'],
@@ -91,7 +118,7 @@ export class ProjectService {
       throw new NotFoundException('Project not found');
     }
 
-    return this.withImageUrl(project);
+    return this.withImageUrl(project, req);
   }
 
   async update(id: string, dto: UpdateProjectDto) {

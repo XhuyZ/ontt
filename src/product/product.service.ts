@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type { Request } from 'express';
 
 import { Product } from './entities/product.entity';
 import { Category } from './entities/category.entity';
@@ -17,16 +18,39 @@ export class ProductService {
     private categoryRepo: Repository<Category>,
   ) {}
 
-  private buildImageUrl(path?: string) {
+  private resolveBaseUrl(req?: Request) {
+    const configuredBaseUrl =
+      process.env.IMAGE_BASE_URL ||
+      process.env.APP_BASE_URL ||
+      process.env.PUBLIC_BASE_URL;
+
+    if (configuredBaseUrl) {
+      return configuredBaseUrl.replace(/\/+$/, '');
+    }
+
+    if (!req) {
+      return '';
+    }
+
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const proto = Array.isArray(forwardedProto)
+      ? forwardedProto[0]
+      : forwardedProto || req.protocol;
+
+    const forwardedHost = req.headers['x-forwarded-host'];
+    const host = Array.isArray(forwardedHost)
+      ? forwardedHost[0]
+      : forwardedHost || req.get('host');
+
+    return host ? `${proto}://${host}` : '';
+  }
+
+  private buildImageUrl(path?: string, req?: Request) {
     if (!path) {
       return path;
     }
 
-    const baseUrl =
-      process.env.IMAGE_BASE_URL ||
-      process.env.APP_BASE_URL ||
-      process.env.PUBLIC_BASE_URL ||
-      '';
+    const baseUrl = this.resolveBaseUrl(req);
 
     if (!baseUrl) {
       return path;
@@ -35,12 +59,15 @@ export class ProductService {
     return `${baseUrl.replace(/\/+$/, '')}${path}`;
   }
 
-  private withImageUrl<T extends { images?: Array<{ url?: string }> }>(item: T): T {
+  private withImageUrl<T extends { images?: Array<{ url?: string }> }>(
+    item: T,
+    req?: Request,
+  ): T {
     return {
       ...item,
       images: (item.images ?? []).map((image) => ({
         ...image,
-        imgUrl: this.buildImageUrl(image.url),
+        imgUrl: this.buildImageUrl(image.url, req),
       })),
     };
   }
@@ -63,14 +90,14 @@ export class ProductService {
     return this.productRepo.save(product);
   }
 
-  async findAll() {
+  async findAll(req?: Request) {
     const items = await this.productRepo.find({
       relations: ['category', 'images'],
     });
-    return items.map((item) => this.withImageUrl(item));
+    return items.map((item) => this.withImageUrl(item, req));
   }
 
-  async findByCategoryId(categoryId: string) {
+  async findByCategoryId(categoryId: string, req?: Request) {
     const items = await this.productRepo.find({
       where: {
         category: { id: categoryId },
@@ -78,10 +105,10 @@ export class ProductService {
       relations: ['category', 'images'],
       order: { name: 'ASC' },
     });
-    return items.map((item) => this.withImageUrl(item));
+    return items.map((item) => this.withImageUrl(item, req));
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, req?: Request) {
     const product = await this.productRepo.findOne({
       where: { id },
       relations: ['category', 'images'],
@@ -91,7 +118,7 @@ export class ProductService {
       throw new NotFoundException('Product not found');
     }
 
-    return this.withImageUrl(product);
+    return this.withImageUrl(product, req);
   }
 
   async update(id: string, dto: UpdateProductDto) {

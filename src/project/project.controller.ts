@@ -7,8 +7,10 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -24,20 +26,21 @@ export class ProjectController {
   }
 
   @Get()
-  findAll() {
-    return this.projectService.findAll();
+  findAll(@Req() req: Request) {
+    return this.projectService.findAll(req);
   }
 
   @Get('category/:projectCategoryId')
   findByProjectCategoryId(
     @Param('projectCategoryId', ParseUUIDPipe) projectCategoryId: string,
+    @Req() req: Request,
   ) {
-    return this.projectService.findByProjectCategoryId(projectCategoryId);
+    return this.projectService.findByProjectCategoryId(projectCategoryId, req);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.projectService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.projectService.findOne(id, req);
   }
 
   @Patch(':id')
