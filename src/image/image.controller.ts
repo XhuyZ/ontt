@@ -5,12 +5,14 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
   UploadedFile,
   Query,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBody, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Request } from 'express';
 import { ImageService } from './image.service';
 
 @ApiTags('Images')
@@ -46,8 +48,8 @@ export class ImageController {
     },
   })
   @UseInterceptors(FileInterceptor('file'))
-  upload(@UploadedFile() file: Express.Multer.File) {
-    return this.imageService.upload(file);
+  upload(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    return this.imageService.upload(file, req);
   }
 
   @Post('upload/product/:productId')
@@ -68,8 +70,9 @@ export class ImageController {
   uploadToProduct(
     @Param('productId', ParseUUIDPipe) productId: string,
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
   ) {
-    return this.imageService.uploadToProduct(productId, file);
+    return this.imageService.uploadToProduct(productId, file, req);
   }
 
   @Post('upload/project/:projectId')
@@ -90,8 +93,9 @@ export class ImageController {
   uploadToProject(
     @Param('projectId', ParseUUIDPipe) projectId: string,
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
   ) {
-    return this.imageService.uploadToProject(projectId, file);
+    return this.imageService.uploadToProject(projectId, file, req);
   }
 
   @Post('product/:productId/:imageId')

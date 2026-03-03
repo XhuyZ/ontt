@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Request } from 'express';
 
 import { Image } from '../product/entities/product-image.entity';
 import { Product } from '../product/entities/product.entity';
@@ -20,6 +21,38 @@ export class ImageService {
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
   ) {}
+
+  private resolveBaseUrl(req?: Request) {
+    const configuredBaseUrl =
+      process.env.IMAGE_BASE_URL ||
+      process.env.APP_BASE_URL ||
+      process.env.PUBLIC_BASE_URL;
+
+    if (configuredBaseUrl) {
+      return configuredBaseUrl.replace(/\/+$/, '');
+    }
+
+    if (!req) {
+      return '';
+    }
+
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const proto = Array.isArray(forwardedProto)
+      ? forwardedProto[0]
+      : forwardedProto || req.protocol;
+
+    const forwardedHost = req.headers['x-forwarded-host'];
+    const host = Array.isArray(forwardedHost)
+      ? forwardedHost[0]
+      : forwardedHost || req.get('host');
+
+    return host ? `${proto}://${host}` : '';
+  }
+
+  private toAbsoluteImageUrl(path: string, req?: Request) {
+    const baseUrl = this.resolveBaseUrl(req);
+    return baseUrl ? `${baseUrl}${path}` : path;
+  }
 
   async findAll(page = 1, limit = 20) {
     const take = Math.min(Math.max(limit, 1), 100);
@@ -41,7 +74,7 @@ export class ImageService {
     };
   }
 
-  async upload(file: Express.Multer.File) {
+  async upload(file: Express.Multer.File, req?: Request) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -53,10 +86,18 @@ export class ImageService {
     const saved = await this.imageRepo.save(image);
 
     // Trả ra để client lấy id & url dùng sau
-    return { id: saved.id, url: saved.url };
+    return {
+      id: saved.id,
+      url: saved.url,
+      imgUrl: this.toAbsoluteImageUrl(saved.url, req),
+    };
   }
 
-  async uploadToProduct(productId: string, file: Express.Multer.File) {
+  async uploadToProduct(
+    productId: string,
+    file: Express.Multer.File,
+    req?: Request,
+  ) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -70,10 +111,19 @@ export class ImageService {
     const image = this.imageRepo.create({ url, product, project: null });
     const saved = await this.imageRepo.save(image);
 
-    return { id: saved.id, url: saved.url, productId: product.id };
+    return {
+      id: saved.id,
+      url: saved.url,
+      imgUrl: this.toAbsoluteImageUrl(saved.url, req),
+      productId: product.id,
+    };
   }
 
-  async uploadToProject(projectId: string, file: Express.Multer.File) {
+  async uploadToProject(
+    projectId: string,
+    file: Express.Multer.File,
+    req?: Request,
+  ) {
     if (!file) {
       throw new BadRequestException('File is required');
     }
@@ -87,7 +137,12 @@ export class ImageService {
     const image = this.imageRepo.create({ url, project, product: null });
     const saved = await this.imageRepo.save(image);
 
-    return { id: saved.id, url: saved.url, projectId: project.id };
+    return {
+      id: saved.id,
+      url: saved.url,
+      imgUrl: this.toAbsoluteImageUrl(saved.url, req),
+      projectId: project.id,
+    };
   }
 
   async addToProduct(productId: string, imageId: string) {
