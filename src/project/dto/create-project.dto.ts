@@ -2,6 +2,7 @@ import {
   IsArray,
   IsNotEmpty,
   IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -19,6 +20,10 @@ export class CreateProjectDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @ApiProperty({ example: '66f78ef9-14ec-429a-9f17-eb2d7f05e25f' })
+  @IsUUID()
+  projectCategoryId: string;
 
   @ApiProperty({ type: [CreateProjectImageDto] })
   @IsArray()
