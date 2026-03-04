@@ -6,7 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'https://opnhuatuankiet.io.vn'],
+    origin: ['http://localhost:5173', 'https://api.opnhuatuankiet.io.vn' , 'https://opnhuatuankiet.io.vn'],
     credentials: true,
   });
 
