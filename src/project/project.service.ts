@@ -7,6 +7,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project } from './entities/project.entity';
 import { ProjectCategory } from './entities/project-category.entity';
+import { GetProjectsQueryDto } from './dto/get-projects-query.dto';
 
 @Injectable()
 export class ProjectService {
@@ -15,7 +16,7 @@ export class ProjectService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(ProjectCategory)
     private readonly projectCategoryRepo: Repository<ProjectCategory>,
-  ) {}
+  ) { }
 
   private resolveBaseUrl(req?: Request) {
     const configuredBaseUrl =
@@ -90,21 +91,58 @@ export class ProjectService {
     return this.projectRepo.save(project);
   }
 
-  async findAll(req?: Request) {
-    const items = await this.projectRepo.find({
-      relations: ['images', 'projectCategory'],
-    });
+  async findAll(req?: Request, query?: GetProjectsQueryDto) {
+    const queryBuilder = this.projectRepo
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.projectCategory', 'projectCategory')
+      .leftJoinAndSelect('project.images', 'images');
+
+    if (query?.ids) {
+      const ids = query.ids.split(',').map((id) => id.trim());
+      queryBuilder.andWhere('project.id IN (:...ids)', { ids });
+    }
+
+    if (query?.random) {
+      queryBuilder.orderBy('RANDOM()');
+    } else {
+      queryBuilder.orderBy('project.name', 'ASC');
+    }
+
+    if (query?.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    const items = await queryBuilder.getMany();
     return items.map((item) => this.withImageUrl(item, req));
   }
 
-  async findByProjectCategoryId(projectCategoryId: string, req?: Request) {
-    const items = await this.projectRepo.find({
-      where: {
-        projectCategory: { id: projectCategoryId },
-      },
-      relations: ['images', 'projectCategory'],
-      order: { name: 'ASC' },
-    });
+  async findByProjectCategoryId(
+    projectCategoryId: string,
+    req?: Request,
+    query?: GetProjectsQueryDto,
+  ) {
+    const queryBuilder = this.projectRepo
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.projectCategory', 'projectCategory')
+      .leftJoinAndSelect('project.images', 'images')
+      .where('projectCategory.id = :projectCategoryId', { projectCategoryId });
+
+    if (query?.ids) {
+      const ids = query.ids.split(',').map((id) => id.trim());
+      queryBuilder.andWhere('project.id IN (:...ids)', { ids });
+    }
+
+    if (query?.random) {
+      queryBuilder.orderBy('RANDOM()');
+    } else {
+      queryBuilder.orderBy('project.name', 'ASC');
+    }
+
+    if (query?.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    const items = await queryBuilder.getMany();
     return items.map((item) => this.withImageUrl(item, req));
   }
 

@@ -7,6 +7,7 @@ import { Product } from './entities/product.entity';
 import { Category } from './entities/category.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { GetProductsQueryDto } from './dto/get-products-query.dto';
 
 @Injectable()
 export class ProductService {
@@ -16,7 +17,7 @@ export class ProductService {
 
     @InjectRepository(Category)
     private categoryRepo: Repository<Category>,
-  ) {}
+  ) { }
 
   private resolveBaseUrl(req?: Request) {
     const configuredBaseUrl =
@@ -90,21 +91,58 @@ export class ProductService {
     return this.productRepo.save(product);
   }
 
-  async findAll(req?: Request) {
-    const items = await this.productRepo.find({
-      relations: ['category', 'images'],
-    });
+  async findAll(req?: Request, query?: GetProductsQueryDto) {
+    const queryBuilder = this.productRepo
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.images', 'images');
+
+    if (query?.ids) {
+      const ids = query.ids.split(',').map((id) => id.trim());
+      queryBuilder.andWhere('product.id IN (:...ids)', { ids });
+    }
+
+    if (query?.random) {
+      queryBuilder.orderBy('RANDOM()');
+    } else {
+      queryBuilder.orderBy('product.name', 'ASC');
+    }
+
+    if (query?.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    const items = await queryBuilder.getMany();
     return items.map((item) => this.withImageUrl(item, req));
   }
 
-  async findByCategoryId(categoryId: string, req?: Request) {
-    const items = await this.productRepo.find({
-      where: {
-        category: { id: categoryId },
-      },
-      relations: ['category', 'images'],
-      order: { name: 'ASC' },
-    });
+  async findByCategoryId(
+    categoryId: string,
+    req?: Request,
+    query?: GetProductsQueryDto,
+  ) {
+    const queryBuilder = this.productRepo
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.images', 'images')
+      .where('category.id = :categoryId', { categoryId });
+
+    if (query?.ids) {
+      const ids = query.ids.split(',').map((id) => id.trim());
+      queryBuilder.andWhere('product.id IN (:...ids)', { ids });
+    }
+
+    if (query?.random) {
+      queryBuilder.orderBy('RANDOM()');
+    } else {
+      queryBuilder.orderBy('product.name', 'ASC');
+    }
+
+    if (query?.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    const items = await queryBuilder.getMany();
     return items.map((item) => this.withImageUrl(item, req));
   }
 

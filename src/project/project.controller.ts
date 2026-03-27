@@ -7,6 +7,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -14,11 +15,12 @@ import type { Request } from 'express';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { GetProjectsQueryDto } from './dto/get-projects-query.dto';
 
 @ApiTags('Projects')
 @Controller('project')
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
@@ -26,16 +28,21 @@ export class ProjectController {
   }
 
   @Get()
-  findAll(@Req() req: Request) {
-    return this.projectService.findAll(req);
+  findAll(@Req() req: Request, @Query() query: GetProjectsQueryDto) {
+    return this.projectService.findAll(req, query);
   }
 
   @Get('category/:projectCategoryId')
   findByProjectCategoryId(
     @Param('projectCategoryId', ParseUUIDPipe) projectCategoryId: string,
     @Req() req: Request,
+    @Query() query: GetProjectsQueryDto,
   ) {
-    return this.projectService.findByProjectCategoryId(projectCategoryId, req);
+    return this.projectService.findByProjectCategoryId(
+      projectCategoryId,
+      req,
+      query,
+    );
   }
 
   @Get(':id')
