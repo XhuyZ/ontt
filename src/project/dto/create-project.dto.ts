@@ -4,6 +4,7 @@ import {
   IsString,
   IsUUID,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -25,10 +26,11 @@ export class CreateProjectDto {
   @IsUUID()
   projectCategoryId: string;
 
-  @ApiProperty({ type: [CreateProjectImageDto] })
+  @ApiProperty({ type: [CreateProjectImageDto], required: false })
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateProjectImageDto)
-  images: CreateProjectImageDto[];
+  images?: CreateProjectImageDto[];
 }
 
